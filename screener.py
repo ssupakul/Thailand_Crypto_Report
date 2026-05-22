@@ -15,7 +15,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
 
 # รายชื่อเหรียญที่เราจะสแกนทรงกราฟตลาดโลก แล้วแปลงราคาเป็น THB ให้คุณ
-WATCHLIST = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "EIGENUSDT", "FLOKIUSDT"]
+WATCHLIST = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "EIGENUSDT"]
 , "FLOKIUSDT"]
 
 def get_usd_to_thb():
