@@ -13,7 +13,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
 
 # เปลี่ยนมาใช้สัญลักษณ์มาตรฐานสากลของ Yahoo Finance (ไม่มีปัญหา 404 แน่นอน)
-WATCHLIST = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "ADA-USD", "DOGE-USD", "FLOKI-USD"]
+WATCHLIST = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "ADA-USD", "DOGE-USD", "NEAR-USD", "OP-USD", "EIGEN-USD", "FLOKI-USD"]
 
 def get_realtime_thb_rate():
     """ ดึงอัตราแลกเปลี่ยน USD/THB ปัจจุบันโดยตรงจาก Yahoo Finance (THB=X) """
