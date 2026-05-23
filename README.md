@@ -1,2 +1,2 @@
-# Thai Crypto report
-Thai Crypto Report
+# Yahoo Finance Crypto report
+Yahoo Finance Crypto report in USD
