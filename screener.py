@@ -13,7 +13,7 @@ LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push"
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
 
-WATCHLIST = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "EIGEN-USD", "DOGE-USD"]
+WATCHLIST = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "EIGEN-USD", "FLOKI-USD", "ADA-USD", "OP-USD", "NEAR-USD", "SHIB-USD", "DOGE-USD"]
 STATE_FILE = "screener_state.json"
 
 def load_state():
