@@ -124,7 +124,7 @@ def screen_crypto():
         last_ema200_usd = last_row["EMA_200"]
         
         # 🟢 เงื่อนไขเข้าซื้อ: เพิ่งตัดลงมาต่ำกว่าหรือเท่ากับ 32 ในแท่งนี้
-        if last_rsi <= 32 and prev_rsi > 32:
+        if last_rsi <= 35 and prev_rsi > 35:
             is_bull_div = check_bullish_divergence(df)
             buy_zone = f"{last_close_usd:,.4f} - {(last_close_usd * 0.98):,.4f}"
             take_profit = f"{(last_close_usd * 1.05):,.4f} (หรือแนวต้าน EMA50: {last_ema50_usd:,.4f})"
