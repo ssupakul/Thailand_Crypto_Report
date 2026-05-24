@@ -152,7 +152,7 @@ def screen_crypto():
             signals.append(msg)
             
         # 🔴 เงื่อนไขเตือนขาย: เพิ่งตัดขึ้นไปสูงกว่าหรือเท่ากับ 70 ในแท่งนี้
-        elif last_rsi >= 70 and prev_rsi < 70:
+        elif last_rsi >= 65 and prev_rsi < 65:
             is_bear_div = check_bearish_divergence(df)
             sell_zone = f"{last_close_usd:,.4f} - {(last_close_usd * 1.02):,.4f}"
             re_entry_zone = f"{(last_close_usd * 0.95):,.4f} (หรือแนวรับ EMA50: {last_ema50_usd:,.4f})"
