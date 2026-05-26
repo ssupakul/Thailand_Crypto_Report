@@ -1,12 +1,11 @@
 name: Yahoo Finance Crypto Screener
 
+# เปลี่ยนมารับ Trigger จากภายนอก (Webhook) และปุ่มกดด้วยมือ
 on:
-  schedule:
-    # รันทุก 3 ชั่วโมง เริ่มต้นที่นาทีที่ 10 ของชั่วโมงสากล
-    - cron: '10 */3 * * *'
-  workflow_dispatch: # สำหรับกดปุ่มคลิกรันเทสด้วยตัวเองได้
+  repository_dispatch:
+    types: [cron_trigger] # ตั้งชื่อ Event Type ไว้สอดคล้องกับที่จะเซ็ตใน cron-job.org
+  workflow_dispatch: 
 
-# 🟢 จุดเพิ่มที่ 1: ประกาศขอสิทธิ์ Write ให้ตัว Workflow เพื่อให้สคริปต์สั่ง Push สเตทกลับได้
 permissions:
   contents: write
 
@@ -18,7 +17,6 @@ jobs:
     - name: Checkout repository code
       uses: actions/checkout@v4.2.2
       with:
-        # 🟢 จุดเพิ่มที่ 2: สั่งให้จดจำโทเคนสิทธิ์ไว้เพื่อให้สคริปต์ Python ใช้ตอนทำ git push
         persist-credentials: true
 
     - name: Set up Python
@@ -30,11 +28,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # ตรวจสอบให้มั่นใจว่าใน requirements.txt ของคุณมีครบ (pandas, pandas-ta, yfinance, requests)
         pip install -r requirements.txt
 
     - name: Execute Screener Script
       env:
-        LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-        LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        # อัปเดตตัวแปรระบบให้เป็นของ Telegram ตามสคริปต์ใหม่ของเรา
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python screener.py
