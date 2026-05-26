@@ -7,23 +7,29 @@ import yfinance as yf
 # -------------------------------------------------------------------------
 # SETUP & CONFIGURATION
 # -------------------------------------------------------------------------
+# เปลี่ยนคอนฟิกมาใช้ Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 WATCHLIST = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "EIGEN-USD", "FLOKI-USD", "NEAR-USD", "OP-USD", "ADA-USD", "SHIB-USD", "DOGE-USD"]
 
 def send_telegram_message(text_msg):
-    """ ฟังก์ชันส่งข้อความไปยัง Telegram ด้วยรูปแบบ HTML """
+    """ ฟังก์ชันส่งข้อความไปยัง Telegram รองรับ MarkdownV2 เพื่อความสวยงาม """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("Error: Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID.")
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    
+    # ทำการ Escape ตัวอักษรพิเศษบางตัวสำหรับ MarkdownV2 ของ Telegram เพื่อไม่ให้ส่งพลาด
+    escape_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    escaped_msg = text_msg
+    # หมายเหตุ: ในโค้ดข้อความด้านล่างเราจะจัดฟอร์แมตแบบปกติ และเปิดใช้ HTML mode แทนเพื่อความง่ายและเสถียรในการแสดงผล
+    
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": text_msg,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": True # ปิดพรีวิวลิงก์เผื่อมีสัญลักษณ์แปลกๆ
+        "parse_mode": "HTML"  # ใช้ HTML เพื่อจัดตัวหนา <b> และเว้นบรรทัดได้ง่าย
     }
     
     try:
@@ -108,19 +114,18 @@ def screen_crypto():
         last_ema50_usd = last_row["EMA_50"]
         last_ema200_usd = last_row["EMA_200"]
         
+        # -------------------------------------------------------------------------
+        # 1. วิเคราะห์แนวโน้มรายเหรียญ (สรุปของแต่ละเหรียญ)
+        # -------------------------------------------------------------------------
         total_coins += 1
-        
-        # -------------------------------------------------------------------------
-        # 1. เช็กแนวโน้มรายเหรียญ (ตามเกณฑ์เหนือ/ใต้เส้น EMA200)
-        # -------------------------------------------------------------------------
+        # เกณฑ์ชี้วัด: ถ้าราคา > EMA200 ถือว่าเป็นแนวโน้มขาขึ้นในภาพรวม
         if last_close_usd > last_ema200_usd:
-            coin_trend = "🟢 ขาขึ้น"
+            coin_trend = "🟢 ขาขึ้น (Above EMA200)"
             bullish_count += 1
         else:
-            coin_trend = "🔴 ขาลง"
+            coin_trend = "🔴 ขาลง (Below EMA200)"
             
-        # ยุบแนวโน้มเข้าไปอยู่ในไลน์ข้อมูลของเหรียญนั้นๆ เลย
-        coin_summaries.append(f"• <b>{display_name}</b>: ${last_close_usd:,.4f} ({coin_trend} | RSI: {last_rsi:.1f})")
+        coin_summaries.append(f"• <b>{display_name}</b>: ${last_close_usd:,.4f} | RSI: {last_rsi:.1f}\n  👉 แนวโน้ม: {coin_trend}")
         
         # -------------------------------------------------------------------------
         # 2. คัดกรองสัญญาณเทรด (RSI Signals)
@@ -143,7 +148,7 @@ def screen_crypto():
                 
             msg = (
                 f"\n🟢 <b>[SIGNAL BUY] {display_name}</b>\n"
-                f"ราคาปัจจุบัน: {last_close_usd:,.4f} USD ({coin_trend})\n"
+                f"ราคาปัจจุบัน: {last_close_usd:,.4f} USD\n"
                 f"RSI (1h): {last_rsi:.2f}\n"
                 f"สถานะกราฟ: {status_context}\n"
                 f"📍 ช่วงราคาเข้าซื้อ: {buy_zone} USD\n"
@@ -171,7 +176,7 @@ def screen_crypto():
                 
             msg = (
                 f"\n🔴 <b>[SIGNAL SELL] {display_name}</b>\n"
-                f"ราคาปัจจุบัน: {last_close_usd:,.4f} USD ({coin_trend})\n"
+                f"ราคาปัจจุบัน: {last_close_usd:,.4f} USD\n"
                 f"RSI (1h): {last_rsi:.2f}\n"
                 f"สถานะกราฟ: {status_context}\n"
                 f"📍 โซนแบ่งขายทำกำไร: {sell_zone} USD\n"
@@ -182,36 +187,39 @@ def screen_crypto():
             signals.append(msg)
 
     # -------------------------------------------------------------------------
-    # 3. จัดการแสดงผลข้อความใน Header และภาพรวมตลาด
+    # 3. ประมวลผลและจัดฟอร์แมตข้อความเพื่อส่งเข้า Telegram
     # -------------------------------------------------------------------------
     if total_coins > 0:
+        # คำนวณภาพรวมตลาดจากปริมาณเหรียญที่เป็นขาขึ้น (ยืนเหนือ EMA200 ได้มากกว่าครึ่งนึงไหม)
         bullish_ratio = bullish_count / total_coins
         if bullish_ratio >= 0.6:
-            market_overview = "📈 ขาขึ้นชัดเจน (Bullish)"
+            market_overview = " Bullish (ขาขึ้นชัดเจน เหรียญส่วนใหญ่ยืนเหนือ EMA200)"
         elif bullish_ratio <= 0.4:
-            market_overview = "📉 ขาลงรุนแรง (Bearish)"
+            market_overview = " Bearish (ขาลงรุนแรง เหรียญส่วนใหญ่อยู่ใต้ EMA200)"
         else:
-            market_overview = "↔️ ไซด์เวย์เลือกทาง (Sideways)"
+            market_overview = " Sideways (เลือกทาง/ผสมผสาน ตลาดกำลังลังเล)"
             
-        # ประกอบร่าง Message ใหม่ยกภาพรวมขึ้นหัวข้อ (Header)
-        report_msg = f"📊 <b>[Crypto Screener Report] ภาพรวมตลาด: {market_overview}</b>\n"
-        report_msg += f"สัดส่วนเหรียญทรงขาขึ้น: {bullish_count} จากทั้งหมด {total_coins} ตัว\n"
-        report_msg += "=================================\n\n"
+        # สร้างโครงสร้างข้อความรายงาน
+        report_msg = "📊 <b>[Yahoo Finance Crypto Screener Report]</b>\n"
+        report_msg += f"<b>ภาพรวมตลาด:</b> {market_overview}\n"
+        report_msg += f"(เหรียญทรงขาขึ้น {bullish_count}/{total_coins} ตัว)\n"
+        report_msg += "=========================\n\n"
         
-        # แสดงรายการสรุปรายเหรียญ (ที่มี trend อยู่ด้านในตัวมันเองแล้ว)
-        report_msg += "<b>🧐 สรุปรายเหรียญล่าสุด:</b>\n"
+        # ส่วนที่ 1: สรุปรายเหรียญ
+        report_msg += "<b>🧐 สรุปแนวโน้มรายเหรียญ:</b>\n"
         report_msg += "\n".join(coin_summaries) + "\n\n"
-        report_msg += "=================================\n"
+        report_msg += "=========================\n"
         
-        # แจ้งเตือนสัญญาณเฉพาะตัวที่มี Action ล่าสุด
+        # ส่วนที่ 2: สัญญาณซื้อ/ขาย (ถ้ามี)
         if signals:
-            report_msg += "⚡ <b>สัญญาณเทรดเร่งด่วนในชั่วโมงนี้:</b>\n"
+            report_msg += "⚡ <b>สัญญาณเทรดที่ตรวจพบในชั่วโมงนี้:</b>\n"
             report_msg += "".join(signals)
         else:
-            report_msg += "\nℹ️ <i>ในชั่วโมงนี้ไม่มีเหรียญใดเข้าเงื่อนไขสัญญาณซื้อ/ขาย</i>"
+            report_msg += "\nℹ️ <i>ในชั่วโมงนี้ไม่มีเหรียญใดเข้าเงื่อนไข RSI Buy/Sell</i>"
             
+        # ส่งรายงานทั้งหมดเข้า Telegram (ส่งทีเดียวครบถ้วน)
         send_telegram_message(report_msg)
-        print("Process complete: Updated layout report sent to Telegram.")
+        print("Process complete: Summary report sent to Telegram.")
     else:
         print("Process complete: No data found to analyze.")
 
