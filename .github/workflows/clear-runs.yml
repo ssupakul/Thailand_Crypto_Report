@@ -1,0 +1,30 @@
+name: Clear Old Workflow Runs
+
+on:
+  workflow_dispatch: 
+  schedule:
+    - cron: '0 0 * * 0' # ทำงานอัตโนมัติทุกๆ วันอาทิตย์ เวลา 07:00 น. เวลาไทย
+
+jobs:
+  clear-runs:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write 
+
+    steps:
+      - name: Delete workflow runs older than 3 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          # --created "<3 days ago" หมายถึง เลือกเฉพาะรันที่ถูกสร้างขึ้นก่อน 3 วันที่แล้ว
+          gh run list --limit 100 --created "<3 days ago" --json databaseId --jq '.[].databaseId' | while read -r run_id; do
+            if [ "$run_id" = "$CURRENT_RUN_ID" ]; then
+              echo "Skipping current run ID: $run_id"
+              continue
+            fi
+            
+            echo "Deleting run ID: $run_id"
+            gh run delete "$run_id"
+          done
